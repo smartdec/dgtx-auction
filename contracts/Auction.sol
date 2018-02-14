@@ -63,6 +63,9 @@ contract Auction is Ownable, usingOraclize, ERC223ReceivingContract {
      * After sale is finished, withdraws tokens to participants.
      */
     function () public payable {
+        if (msg.sender == owner) {
+            return;
+        }
         require(now >= START_TIMESTAMP);
         require(!isContract(msg.sender));
 
@@ -171,6 +174,28 @@ contract Auction is Ownable, usingOraclize, ERC223ReceivingContract {
         assert(totalCentsCollected < totalTokens * MIN_PRICE_IN_CENTS / TOKEN_DECIMALS_MULTIPLIER);
         uint gap = totalTokens - totalCentsCollected * TOKEN_DECIMALS_MULTIPLIER / MIN_PRICE_IN_CENTS;
         ERC223(token).transfer(_recipient, gap);
+    }
+
+    /**
+     * @notice Lets the owner withdraw ethers from contract
+     * @param _recipient Address to transfer ethers
+     * @param _value Wei to withdraw
+     */
+    function withdraw(address _recipient, uint _value) public onlyOwner {
+        require(_value != 0);
+        require(_recipient != address(0));
+        require(this.balance >= _value);
+        _recipient.transfer(_value);
+    }
+
+    /**
+     * @notice Lets the owner withdraw all ethers from contract
+     * @param _recipient Address to transfer ethers
+     */
+    function withdraw(address _recipient) public onlyOwner {
+        require(_recipient != address(0));
+        require(this.balance > 0);
+        _recipient.transfer(this.balance);
     }
 
     /**
