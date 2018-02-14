@@ -4,11 +4,6 @@ require('babel-register')({
 
 require('babel-polyfill');
 
-require('chai')
-    .use(require('chai-as-promised'))
-    .use(require('chai-bignumber')(require('bignumber.js')))
-    .should();
-
 module.exports = {
   networks: {
     development: {

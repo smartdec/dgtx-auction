@@ -12,6 +12,6 @@ module.exports = {
     copyNodeModules: true,
     norpc: true,
     skipFiles: [
-        'Migrations.sol', 'ERC223.sol', 'ERC223ReceivingContract.sol'
+        'Migrations.sol', 'ERC223.sol', 'ERC223ReceivingContract.sol', 'oraclize/OraclizeAddrResolverI.sol', 'oraclize/OraclizeI.sol', 'oraclize/usingOraclize.sol'
     ]
 };
