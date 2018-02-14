@@ -68,7 +68,7 @@ contract Auction is Ownable, usingOraclize, ERC223ReceivingContract {
     /**
      * @notice Fallback function.
      * During the auction receives and remembers participants bids.
-     * After sale is finished, withdraws tokens to participants.
+     * After the sale is finished, withdraws tokens to participants.
      * It is not allowed to bid from contract (e.g., multisig).
      */
     function () public payable {
@@ -132,7 +132,7 @@ contract Auction is Ownable, usingOraclize, ERC223ReceivingContract {
     }
 
     /**
-     * @notice Сhecks if sufficient funds are received:
+     * @notice Сhecks if sufficient funds have been received:
      * amount of USD cents received is more or equal to the current valuation of the tokens offered
      * (that is current auction token price multiplied by total amount of tokens offered).
      * @dev Sets final token price
@@ -160,9 +160,9 @@ contract Auction is Ownable, usingOraclize, ERC223ReceivingContract {
     }
 
     /**
-     * @notice Function to transfer tokens to participants in range [_from, _to).
-     * @param _from Begin index of participant range to withdraw
-     * @param _to Index after the last withdrawn participant
+     * @notice Function to transfer tokens to participants in the range [_from, _to).
+     * @param _from starting index in the range of participants to withdraw to
+     * @param _to index after the last participant to withdraw to
      */
     function distributeTokensRange(uint _from, uint _to) public {
         require(hasEnded());
@@ -179,7 +179,7 @@ contract Auction is Ownable, usingOraclize, ERC223ReceivingContract {
 
     /**
      * @notice Lets the owner withdraw extra tokens, which were not sold during the auction.
-     * @param _recipient Address to transfer tokens
+     * @param _recipient address to transfer tokens to
      */
     function withdrawExtraTokens(address _recipient) public onlyOwner {
         require(now > endTime && !areTokensSold());
@@ -189,7 +189,7 @@ contract Auction is Ownable, usingOraclize, ERC223ReceivingContract {
 
     /**
      * @notice Lets the owner withdraw ethers from contract.
-     * @param _recipient Address to transfer ethers
+     * @param _recipient address to transfer ethers to
      * @param _value Wei to withdraw
      */
     function withdraw(address _recipient, uint _value) public onlyOwner {
@@ -201,7 +201,7 @@ contract Auction is Ownable, usingOraclize, ERC223ReceivingContract {
 
     /**
      * @notice Lets the owner withdraw all ethers from contract.
-     * @param _recipient Address to transfer ethers
+     * @param _recipient address to transfer ethers to 
      */
     function withdrawAll(address _recipient) public onlyOwner {
         withdraw(_recipient, this.balance);
@@ -209,8 +209,8 @@ contract Auction is Ownable, usingOraclize, ERC223ReceivingContract {
 
     /**
      * @dev Function which records bids.
-     * @param _bidder is address, who bids
-     * @param _valueETH is value of bid in ether
+     * @param _bidder is the address that bids
+     * @param _valueETH is value of THE bid in ether
      */
     function bid(address _bidder, uint _valueETH) internal {
         uint price = getPrice();
@@ -264,7 +264,7 @@ contract Auction is Ownable, usingOraclize, ERC223ReceivingContract {
     }
 
     /**
-     * @dev assemble the given address bytecode. If bytecode exists then the _addr is a contract.
+     * @dev Assemble the given address bytecode. If bytecode exists then the _addr is a contract.
      * @return true if _addr is contract
      */
     function isContract(address _addr) internal view returns (bool) {
@@ -275,7 +275,7 @@ contract Auction is Ownable, usingOraclize, ERC223ReceivingContract {
     }
 
     /**
-     * @dev internal function to make an oraclize query for rate update with given delay in seconds.
+     * @dev Internal function to make an oraclize query for rate update with given delay in seconds.
      * @param _delay Delay for query in seconds
      */
     function updateEthToCentsRate(uint _delay) private {
