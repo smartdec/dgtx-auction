@@ -15,9 +15,6 @@ contract Auction is Ownable, usingOraclize, ERC223ReceivingContract {
     address public token;
     address public beneficiary;
 
-    uint public constant START_TIMESTAMP = 1518703200; // 9am EST on February 15th, 2018
-    uint public constant END_TIMESTAMP = START_TIMESTAMP + 30 days; 
-    
     uint public constant TOTAL_TOKENS = 100000000 * uint(10) ** 18; // 100 000 000 DGTX
     uint public constant DOLLAR_DECIMALS_MULTIPLIER = 100;
     uint public constant TOKEN_DECIMALS_MULTIPLIER = uint(10) ** 18;
@@ -25,9 +22,12 @@ contract Auction is Ownable, usingOraclize, ERC223ReceivingContract {
     uint public constant START_PRICE_IN_CENTS = 25; 
     uint public constant MIN_PRICE_IN_CENTS = 1; 
     uint public constant TRANSACTION_MIN_IN_ETH = 0.01 ether; 
-    uint public constant ADDRESS_MAX_BID_IN_CENTS = 10000 * DOLLAR_DECIMALS_MULTIPLIER; // 10 000 USD
     uint public constant START_ETH_TO_CENTS = 83800; 
 
+    uint public startTime;
+    uint public endTime;
+
+    uint public maxBidInCentsPerAddress;
     uint public ethToCents = START_ETH_TO_CENTS;
     uint public finalDgtxToCents = 1;
     
@@ -50,11 +50,16 @@ contract Auction is Ownable, usingOraclize, ERC223ReceivingContract {
      * @param _token token address - supposed to be DGTX address
      * @param _beneficiary recipient of received ethers
      */
-    function Auction(address _token, address _beneficiary) public payable Ownable() {
+    function Auction(address _token, address _beneficiary, uint _startTime, uint _maxBidInCentsPerAddress) public payable Ownable() {
         require(_token != address(0));
         require(_beneficiary != address(0));
+        require(_startTime > now);
+        require (_maxBidInCentsPerAddress > 0);
         token = _token;
         beneficiary = _beneficiary;
+        startTime = _startTime;
+        endTime = startTime + 30 days;
+        maxBidInCentsPerAddress = _maxBidInCentsPerAddress;
     }
 
     /**
@@ -66,7 +71,7 @@ contract Auction is Ownable, usingOraclize, ERC223ReceivingContract {
         if (msg.sender == owner) {
             return;
         }
-        require(now >= START_TIMESTAMP);
+        require(now >= startTime);
         require(!isContract(msg.sender));
 
         if (!hasEnded()) {
@@ -104,10 +109,10 @@ contract Auction is Ownable, usingOraclize, ERC223ReceivingContract {
      * @return current token to cents price
      */
     function getPrice() public view returns (uint) {
-        if (now < START_TIMESTAMP) {
+        if (now < startTime) {
             return START_PRICE_IN_CENTS;
         }
-        uint passedHours = (now - START_TIMESTAMP) / 1 hours;
+        uint passedHours = (now - startTime) / 1 hours;
         return (passedHours >= 24) ? MIN_PRICE_IN_CENTS : (25 - passedHours);
     }
 
@@ -116,7 +121,7 @@ contract Auction is Ownable, usingOraclize, ERC223ReceivingContract {
      * @return true if auction has ended
      */
     function hasEnded() public view returns (bool) {
-        return now > END_TIMESTAMP || areTokensSold();
+        return now > endTime || areTokensSold();
     }
 
     /**
@@ -170,7 +175,7 @@ contract Auction is Ownable, usingOraclize, ERC223ReceivingContract {
      * @param _recipient Address to transfer tokens
      */
     function withdrawExtraTokens(address _recipient) public onlyOwner {
-        require(now > END_TIMESTAMP && !areTokensSold());
+        require(now > endTime && !areTokensSold());
         assert(totalCentsCollected < totalTokens * MIN_PRICE_IN_CENTS / TOKEN_DECIMALS_MULTIPLIER);
         uint gap = totalTokens - totalCentsCollected * TOKEN_DECIMALS_MULTIPLIER / MIN_PRICE_IN_CENTS;
         ERC223(token).transfer(_recipient, gap);
@@ -211,8 +216,8 @@ contract Auction is Ownable, usingOraclize, ERC223ReceivingContract {
         uint ethToAccept = _valueETH;
         
         // Refund any ether above address bid limit
-        if (centsReceived[_bidder] + centsToAccept > ADDRESS_MAX_BID_IN_CENTS) {
-            centsToAccept = ADDRESS_MAX_BID_IN_CENTS - centsReceived[_bidder];
+        if (centsReceived[_bidder] + centsToAccept > maxBidInCentsPerAddress) {
+            centsToAccept = maxBidInCentsPerAddress - centsReceived[_bidder];
             ethToAccept = centsToAccept * 1 ether / ethToCents;
         }
 
